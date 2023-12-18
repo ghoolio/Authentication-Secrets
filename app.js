@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const ejs = require('ejs');
 const port = 3000;
 const pg = require('pg');
+const SHA256 = require("crypto-js/sha256");
  
 const app = express();
 
@@ -18,7 +19,7 @@ const db = new pg.Client({
     user: "postgres",
     host: "localhost",
     database: "userDB",
-    password: process.env.PASSWORD,
+    password: SHA256(req.body.password).toString(),
     port: 5433,
 });
 db.connect();
