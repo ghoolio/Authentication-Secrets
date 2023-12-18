@@ -8,8 +8,6 @@ const pg = require('pg');
 const SHA256 = require("crypto-js/sha256");
  
 const app = express();
-
-console.log(process.env.BLA);
  
 app.use(express.static('public'));
 app.set('view engine', 'ejs');
@@ -19,7 +17,7 @@ const db = new pg.Client({
     user: "postgres",
     host: "localhost",
     database: "userDB",
-    password: SHA256(req.body.password).toString(),
+    password: process.env.PASSWORD,
     port: 5433,
 });
 db.connect();
@@ -40,7 +38,7 @@ const secretKey = process.env.SECRETKEY;
 
 app.post("/register", async (req, res) => {
     const email = req.body.username;
-    const password = req.body.password;
+    const password = SHA256(req.body.password).toString();
     try {
         await db.query("INSERT INTO users (username, password) VALUES ($1, pgp_sym_encrypt(($2), ($3)))", [email, password, secretKey]);
         res.render("secrets.ejs");
@@ -48,10 +46,10 @@ app.post("/register", async (req, res) => {
         console.log(err.message);
     };
 });
- 
+
 app.post("/login", async (req, res) => {
     const email = req.body.username;
-    const password = req.body.password;
+    const password = SHA256(req.body.password).toString();
     try {
         const result = await db.query("SELECT username, pgp_sym_decrypt(password, ($1)) AS password FROM users WHERE username=($2)", [secretKey, email]);
         const user = result.rows[0];
@@ -65,5 +63,5 @@ app.post("/login", async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server started on port ${port}`);
+    console.log(`Server started on port ${port}`);
 });
